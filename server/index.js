@@ -1,7 +1,13 @@
 const express = require('express');
-const app = express();
-const port = process.env.PORT || 3000;
+const socketio = require('socket.io');
+const socket = require('./socket.js');
 const path = require('path');
+
+const app = express();
+const socketServer = require('http').Server(app);
+const io = socketio(socketServer);
+
+const port = process.env.PORT || 3000;
 const DIST_DIR = path.join(__dirname, '../dist');
 const mockResponse = {
     foo: 'bar',
@@ -15,7 +21,16 @@ app.get('/api', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(DIST_DIR, 'index.html'));
+    res.sendFile(join(DIST_DIR, 'index.html'));
 });
 
-app.listen(port, () => console.log('listening on port ' + port));
+io.on('connection', socket => {
+    socket.on('message', message => {
+        console.log('got message: ', message);
+
+        // emit message to sockets
+        socket.emit('got message', message);
+    });
+});
+
+socketServer.listen(port, () => console.log('listening on port ' + port));
